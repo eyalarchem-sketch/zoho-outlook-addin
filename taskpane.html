@@ -30,10 +30,16 @@
     </div>
 
     <div class="field">
-      <label for="contactName">Contact (from sender)</label>
-      <input type="text" id="contactName" readonly placeholder="Searching…"/>
+      <label for="contactSearch">Contact</label>
+      <div class="contact-wrapper">
+        <input type="text" id="contactSearch" placeholder="Search by name or email…" autocomplete="off"/>
+        <div id="contactDropdown" class="dropdown" hidden></div>
+      </div>
+      <div id="contactSelected" class="contact-selected" hidden>
+        <span id="contactSelectedName"></span>
+        <button id="btnClearContact" class="btn-clear" type="button">&#x2715;</button>
+      </div>
       <input type="hidden" id="contactId"/>
-      <input type="hidden" id="senderEmail"/>
     </div>
 
     <div class="row">

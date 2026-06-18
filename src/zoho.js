@@ -33,6 +33,19 @@ const Zoho = (() => {
     return data?.data?.[0] ?? null;
   }
 
+  // Search contacts by name or email. Returns up to 5 matches.
+  async function searchContacts(query) {
+    if (!query || query.length < 2) return [];
+    const isEmail = query.includes("@");
+    const param   = isEmail ? `email=${encodeURIComponent(query)}` : `word=${encodeURIComponent(query)}`;
+    try {
+      const data = await apiFetch(`Contacts/search?${param}&fields=id,Full_Name,Email&per_page=5`);
+      return data?.data ?? [];
+    } catch {
+      return [];
+    }
+  }
+
   // Create a Case. Returns the new record id.
   async function createCase({ subject, description, contactId, status, priority }) {
     const record = {
