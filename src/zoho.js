@@ -27,14 +27,10 @@ const Zoho = (() => {
   // Look up a Contact by email address. Returns the first match or null.
   async function findContactByEmail(email) {
     if (!email) return null;
-    try {
-      const data = await apiFetch(
-        `Contacts/search?email=${encodeURIComponent(email)}&fields=id,Full_Name,Email`
-      );
-      return data?.data?.[0] ?? null;
-    } catch {
-      return null; // contact not found is non-fatal
-    }
+    const data = await apiFetch(
+      `Contacts/search?email=${encodeURIComponent(email)}&fields=id,Full_Name,Email`
+    );
+    return data?.data?.[0] ?? null;
   }
 
   // Create a Case. Returns the new record id.
