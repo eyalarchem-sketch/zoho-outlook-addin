@@ -58,7 +58,6 @@ const Auth = (() => {
       scope: CONFIG.scope,
       code_challenge: challenge,
       code_challenge_method: "S256",
-      access_type: "offline",
     });
 
     const authUrl = `${CONFIG.zohoAccountsUrl}/oauth/v2/auth?${params}`;
