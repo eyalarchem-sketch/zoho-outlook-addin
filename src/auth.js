@@ -1,13 +1,30 @@
 // Zoho OAuth 2.0 implicit flow for JavaScript clients
 
 const Auth = (() => {
+  const SCOPE_KEY = "zoho_scope_hash";
+
+  function scopeHash() {
+    // Simple fingerprint so a scope change forces re-auth
+    let h = 0;
+    for (let i = 0; i < CONFIG.scope.length; i++) {
+      h = (Math.imul(31, h) + CONFIG.scope.charCodeAt(i)) | 0;
+    }
+    return String(h);
+  }
+
   function saveToken({ access_token, expires_in }) {
     const expiresAt = Date.now() + Number(expires_in) * 1000 - 60_000;
     localStorage.setItem(CONFIG.storageKeys.accessToken, access_token);
     localStorage.setItem(CONFIG.storageKeys.expiresAt, String(expiresAt));
+    localStorage.setItem(SCOPE_KEY, scopeHash());
   }
 
   function getAccessToken() {
+    // Invalidate token if scope has changed since it was issued
+    if (localStorage.getItem(SCOPE_KEY) !== scopeHash()) {
+      clearTokens();
+      return null;
+    }
     const token = localStorage.getItem(CONFIG.storageKeys.accessToken);
     const expiresAt = Number(localStorage.getItem(CONFIG.storageKeys.expiresAt));
     if (!token || Date.now() >= expiresAt) return null;
@@ -16,6 +33,7 @@ const Auth = (() => {
 
   function clearTokens() {
     Object.values(CONFIG.storageKeys).forEach((k) => localStorage.removeItem(k));
+    localStorage.removeItem(SCOPE_KEY);
   }
 
   function login() {
