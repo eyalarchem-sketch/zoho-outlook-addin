@@ -12,7 +12,7 @@ const CONFIG = {
   zohoAccountsUrl: "https://accounts.zoho.com",
 
   // OAuth scopes needed
-  scope: "ZohoCRM.modules.Cases.CREATE,ZohoCRM.modules.Contacts.READ,ZohoCRM.modules.Attachments.CREATE",
+  scope: "ZohoCRM.modules.Cases.CREATE,ZohoCRM.modules.Contacts.READ,ZohoCRM.modules.Accounts.READ,ZohoCRM.modules.Attachments.CREATE",
 
   // localStorage keys
   storageKeys: {
