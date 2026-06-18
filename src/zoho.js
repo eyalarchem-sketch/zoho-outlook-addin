@@ -154,7 +154,7 @@ const Zoho = (() => {
 
     if (!res.ok) {
       const text = await res.text();
-      console.warn(`Attachment upload failed for "${fileName}": ${res.status} ${text}`);
+      throw new Error(`Attachment upload failed (${res.status}): ${text}`);
     }
   }
 

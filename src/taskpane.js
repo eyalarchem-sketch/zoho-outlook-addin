@@ -390,7 +390,7 @@ Office.onReady(async () => {
     try {
       // Upload the email itself as an .eml file
       const { eml, subject } = await getEmailAsEml();
-      const emlBlob = new Blob([eml], { type: "message/rfc822" });
+      const emlBlob = new Blob([eml], { type: "application/octet-stream" });
       const safeSubject = (subject || "email").replace(/[\\/:*?"<>|]/g, "_");
       await Zoho.attachFileToCaseRaw(caseId, `${safeSubject}.eml`, emlBlob);
 
