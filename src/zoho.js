@@ -69,14 +69,10 @@ const Zoho = (() => {
 
   async function searchAccounts(query) {
     if (!query || query.length < 2) return [];
-    try {
-      const data = await apiFetch(
-        `Accounts/search?word=${encodeURIComponent(query)}&fields=id,Account_Name&per_page=5`
-      );
-      return data?.data ?? [];
-    } catch {
-      return [];
-    }
+    const data = await apiFetch(
+      `Accounts/search?word=${encodeURIComponent(query)}&fields=id,Account_Name&per_page=5`
+    );
+    return data?.data ?? [];
   }
 
   async function getContactsByAccount(accountId) {

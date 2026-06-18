@@ -172,8 +172,12 @@ Office.onReady(async () => {
     const q = supplierSearch.value.trim();
     if (!q || q.length < 2) { supplierDropdown.hidden = true; return; }
     supplierSearchTimer = setTimeout(async () => {
-      const results = await Zoho.searchAccounts(q);
-      showSupplierDropdown(results);
+      try {
+        const results = await Zoho.searchAccounts(q);
+        showSupplierDropdown(results);
+      } catch (err) {
+        setStatus(`Supplier search: ${err.message}`, true);
+      }
     }, 350);
   });
 
@@ -222,12 +226,14 @@ Office.onReady(async () => {
     const subject = document.getElementById("subject").value.trim();
     if (!subject) { setStatus("Subject is required.", true); return; }
 
+    const type = document.getElementById("caseType").value;
+    if (!type || type === "-None-") { setStatus("Case Type is required.", true); return; }
+
     const description         = document.getElementById("description").value.trim();
     const contactId           = contactIdInput.value.trim() || null;
     const accountId           = accountIdInput.value.trim() || null;
     const supplierId          = supplierIdInput.value.trim() || null;
     const supplierContactId   = supplierContactIdInput.value.trim() || null;
-    const type                = document.getElementById("caseType").value;
     const status              = document.getElementById("caseStatus").value;
     const priority            = document.getElementById("casePriority").value;
 
