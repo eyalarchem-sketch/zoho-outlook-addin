@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <title>Authenticating…</title>
+  <title>Authenticating...</title>
   <style>
     body { font-family: "Segoe UI", sans-serif; display: flex; align-items: center;
            justify-content: center; height: 100vh; margin: 0; background: #f5f5f5; }
@@ -11,26 +11,33 @@
   </style>
 </head>
 <body>
-  <p id="msg">Completing authentication…</p>
+  <p id="msg">Completing authentication...</p>
   <script>
     (function () {
-      const params = new URLSearchParams(window.location.search);
-      const code = params.get("code");
-      const error = params.get("error");
+      // Implicit flow: token is in the URL hash
+      const hash = window.location.hash.substring(1);
+      const params = new URLSearchParams(hash);
+
+      const accessToken = params.get("access_token");
+      const expiresIn   = params.get("expires_in");
+      const error       = params.get("error");
 
       if (error) {
         document.getElementById("msg").textContent = "Authentication failed: " + error;
         document.getElementById("msg").className = "error";
+        window.opener?.postMessage({ type: "zoho_oauth_token", error }, window.location.origin);
         return;
       }
 
-      if (code) {
-        // Post the code back to the task pane and close this popup
-        window.opener?.postMessage({ type: "zoho_oauth_code", code }, window.location.origin);
-        document.getElementById("msg").textContent = "Signed in! This window will close…";
+      if (accessToken) {
+        window.opener?.postMessage(
+          { type: "zoho_oauth_token", access_token: accessToken, expires_in: expiresIn || 3600 },
+          window.location.origin
+        );
+        document.getElementById("msg").textContent = "Signed in! This window will close...";
         setTimeout(() => window.close(), 800);
       } else {
-        document.getElementById("msg").textContent = "No authorization code received.";
+        document.getElementById("msg").textContent = "No token received.";
         document.getElementById("msg").className = "error";
       }
     })();

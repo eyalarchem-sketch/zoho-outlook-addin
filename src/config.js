@@ -7,7 +7,7 @@ const CONFIG = {
   // Must match exactly what you registered in the Zoho Developer Console
   redirectUri: "https://eyalarchem-sketch.github.io/zoho-outlook-addin/oauth-callback.html",
 
-  // Zoho data center — change if your org is on .eu / .in / .com.au / .jp
+  // Zoho data center - change if your org is on .eu / .in / .com.au / .jp
   zohoBaseUrl: "https://www.zohoapis.com",
   zohoAccountsUrl: "https://accounts.zoho.com",
 
@@ -17,8 +17,6 @@ const CONFIG = {
   // localStorage keys
   storageKeys: {
     accessToken: "zoho_access_token",
-    refreshToken: "zoho_refresh_token",
     expiresAt: "zoho_expires_at",
-    codeVerifier: "zoho_pkce_verifier",
   },
 };
