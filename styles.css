@@ -234,3 +234,9 @@ textarea { resize: vertical; }
 }
 
 .btn-clear:hover { color: var(--color-primary); }
+
+.section-divider {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  margin: 4px 0;
+}

@@ -142,16 +142,6 @@
         <input type="hidden" id="caseId"/>
       </div>
 
-      <div class="field">
-        <label for="noteSubject">Note Subject <span style="font-weight:400;color:var(--color-muted)">(optional)</span></label>
-        <input type="text" id="noteSubject" placeholder="Note subject…"/>
-      </div>
-
-      <div class="field">
-        <label for="noteContent">Notes <span style="font-weight:400;color:var(--color-muted)">(optional)</span></label>
-        <textarea id="noteContent" rows="8" placeholder="Optionally add a note to the case…"></textarea>
-      </div>
-
       <div class="field checkbox-field">
         <input type="checkbox" id="associateAttachments" checked/>
         <label for="associateAttachments">Upload email attachments</label>
@@ -159,6 +149,21 @@
 
       <div id="associateStatus" class="status" hidden></div>
       <button id="btnAssociate" class="btn-primary">Associate Email</button>
+
+      <hr class="section-divider"/>
+
+      <div class="field">
+        <label for="noteSubject">Note Subject</label>
+        <input type="text" id="noteSubject" placeholder="Note subject…"/>
+      </div>
+
+      <div class="field">
+        <label for="noteContent">Note</label>
+        <textarea id="noteContent" rows="6" placeholder="Note content…"></textarea>
+      </div>
+
+      <div id="noteStatus" class="status" hidden></div>
+      <button id="btnAddNote" class="btn-primary">Add Note</button>
     </div>
 
   </div>

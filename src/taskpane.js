@@ -267,6 +267,8 @@ Office.onReady(async () => {
   const caseIdInput       = document.getElementById("caseId");
   const btnAssociate      = document.getElementById("btnAssociate");
   const associateStatusEl = document.getElementById("associateStatus");
+  const btnAddNote        = document.getElementById("btnAddNote");
+  const noteStatusEl      = document.getElementById("noteStatus");
 
   function setAssociateStatus(msg, isError = false, link = null) {
     associateStatusEl.innerHTML = "";
@@ -394,13 +396,6 @@ Office.onReady(async () => {
       const safeSubject = (subject || "email").replace(/[\\/:*?"<>|]/g, "_");
       await Zoho.attachFileToCaseRaw(caseId, `${safeSubject}.eml`, emlBlob);
 
-      // Add notes if provided
-      const noteSubject = document.getElementById("noteSubject").value.trim();
-      const noteContent = document.getElementById("noteContent").value.trim();
-      if (noteSubject || noteContent) {
-        await Zoho.addNoteToCase(caseId, noteSubject || "(no subject)", noteContent);
-      }
-
       // Upload original attachments if checked
       if (document.getElementById("associateAttachments").checked) {
         await uploadAttachmentsToCase(caseId);
@@ -417,6 +412,45 @@ Office.onReady(async () => {
   }
 
   btnAssociate.addEventListener("click", handleAssociate);
+
+  async function handleAddNote() {
+    const caseId = caseIdInput.value.trim();
+    if (!caseId) { setNoteStatus("Please select a case first.", true); return; }
+
+    const noteSubject = document.getElementById("noteSubject").value.trim();
+    const noteContent = document.getElementById("noteContent").value.trim();
+    if (!noteSubject && !noteContent) { setNoteStatus("Enter a subject or note content.", true); return; }
+
+    btnAddNote.disabled = true;
+    btnAddNote.textContent = "Adding…";
+    setNoteStatus("");
+
+    try {
+      await Zoho.addNoteToCase(caseId, noteSubject || "(no subject)", noteContent);
+      const caseLink = await Zoho.getCaseUrl(caseId);
+      setNoteStatus("Note added!", false, caseLink);
+      document.getElementById("noteSubject").value = "";
+      document.getElementById("noteContent").value = "";
+    } catch (err) {
+      setNoteStatus(`Error: ${err.message}`, true);
+    } finally {
+      btnAddNote.disabled = false;
+      btnAddNote.textContent = "Add Note";
+    }
+  }
+
+  function setNoteStatus(msg, isError = false, link = null) {
+    noteStatusEl.innerHTML = "";
+    if (link) {
+      noteStatusEl.innerHTML = `${msg} <a href="${link}" target="_blank" rel="noopener">Open in Zoho</a>`;
+    } else {
+      noteStatusEl.textContent = msg;
+    }
+    noteStatusEl.className = isError ? "status error" : "status info";
+    noteStatusEl.hidden = !msg;
+  }
+
+  btnAddNote.addEventListener("click", handleAddNote);
 
   // ── Shared attachment uploader ────────────────────────────────
 
