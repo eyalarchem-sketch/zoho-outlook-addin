@@ -42,6 +42,7 @@ const Auth = (() => {
       client_id: CONFIG.clientId,
       redirect_uri: CONFIG.redirectUri,
       scope: CONFIG.scope,
+      prompt: "consent",
     });
 
     const authUrl = `${CONFIG.zohoAccountsUrl}/oauth/v2/auth?${params}`;
