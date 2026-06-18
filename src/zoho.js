@@ -19,27 +19,31 @@ const Zoho = (() => {
       throw new Error(`Zoho API ${res.status}: ${text}`);
     }
 
-    // 204 No Content (e.g. attachment upload success)
     if (res.status === 204) return null;
     return res.json();
   }
 
-  // Look up a Contact by email address. Returns the first match or null.
+  // Look up a Contact by exact email. Returns first match or null.
   async function findContactByEmail(email) {
     if (!email) return null;
+    const criteria = `((Email:equals:${email}))`;
     const data = await apiFetch(
-      `Contacts/search?email=${encodeURIComponent(email)}&fields=id,Full_Name,Email`
+      `Contacts/search?criteria=${encodeURIComponent(criteria)}&fields=id,Full_Name,Email`
     );
     return data?.data?.[0] ?? null;
   }
 
-  // Search contacts by name or email. Returns up to 5 matches.
+  // Search contacts by name (starts_with) or email (equals). Returns up to 5 matches.
   async function searchContacts(query) {
     if (!query || query.length < 2) return [];
-    const isEmail = query.includes("@");
-    const param   = isEmail ? `email=${encodeURIComponent(query)}` : `word=${encodeURIComponent(query)}`;
     try {
-      const data = await apiFetch(`Contacts/search?${param}&fields=id,Full_Name,Email&per_page=5`);
+      const isEmail = query.includes("@");
+      const criteria = isEmail
+        ? `((Email:equals:${query}))`
+        : `((Full_Name:starts_with:${query}))`;
+      const data = await apiFetch(
+        `Contacts/search?criteria=${encodeURIComponent(criteria)}&fields=id,Full_Name,Email&per_page=5`
+      );
       return data?.data ?? [];
     } catch {
       return [];
@@ -56,7 +60,7 @@ const Zoho = (() => {
     };
 
     if (contactId) {
-      record.Contact_Name = { id: contactId };
+      record.Related_To = { id: contactId };
     }
 
     const body = { data: [record] };
@@ -92,5 +96,5 @@ const Zoho = (() => {
     }
   }
 
-  return { findContactByEmail, createCase, attachFileToCaseRaw };
+  return { findContactByEmail, searchContacts, createCase, attachFileToCaseRaw };
 })();
