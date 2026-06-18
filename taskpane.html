@@ -29,8 +29,9 @@
       <input type="text" id="subject" placeholder="Case subject"/>
     </div>
 
+    <!-- Related To (Contact) -->
     <div class="field">
-      <label for="contactSearch">Contact</label>
+      <label for="contactSearch">Related To (Contact)</label>
       <div class="contact-wrapper">
         <input type="text" id="contactSearch" placeholder="Search by name or email…" autocomplete="off"/>
         <div id="contactDropdown" class="dropdown" hidden></div>
@@ -45,6 +46,29 @@
         <label for="accountNameDisplay">Account Name</label>
         <input type="text" id="accountNameDisplay" readonly placeholder=""/>
       </div>
+    </div>
+
+    <!-- Supplier (Account lookup) -->
+    <div class="field">
+      <label for="supplierSearch">Supplier</label>
+      <div class="contact-wrapper">
+        <input type="text" id="supplierSearch" placeholder="Search supplier by name…" autocomplete="off"/>
+        <div id="supplierDropdown" class="dropdown" hidden></div>
+      </div>
+      <div id="supplierSelected" class="contact-selected" hidden>
+        <span id="supplierSelectedName"></span>
+        <button id="btnClearSupplier" class="btn-clear" type="button">&#x2715;</button>
+      </div>
+      <input type="hidden" id="supplierId"/>
+    </div>
+
+    <!-- Supplier Contact (shown after supplier selected) -->
+    <div id="supplierContactRow" class="field" hidden>
+      <label for="supplierContactSelect">Supplier Contact</label>
+      <select id="supplierContactSelect">
+        <option value="">— None —</option>
+      </select>
+      <input type="hidden" id="supplierContactId"/>
     </div>
 
     <div class="row">
@@ -68,6 +92,17 @@
           <option value="Urgent">Urgent</option>
         </select>
       </div>
+    </div>
+
+    <div class="field">
+      <label for="caseType">Case Type</label>
+      <select id="caseType">
+        <option value="-None-">— None —</option>
+        <option value="Parts/Service Quote">Parts/Service Quote</option>
+        <option value="Problem">Service Intervention</option>
+        <option value="Feature Request">Feature Request</option>
+        <option value="Question">Question</option>
+      </select>
     </div>
 
     <div class="field">
