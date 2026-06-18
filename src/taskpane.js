@@ -15,6 +15,8 @@ Office.onReady(async () => {
   const btnClearContact     = document.getElementById("btnClearContact");
   const contactIdInput      = document.getElementById("contactId");
   const accountIdInput      = document.getElementById("accountId");
+  const accountNameRow      = document.getElementById("accountNameRow");
+  const accountNameDisplay  = document.getElementById("accountNameDisplay");
 
   function setStatus(msg, isError = false, link = null) {
     statusEl.innerHTML = "";
@@ -32,18 +34,22 @@ Office.onReady(async () => {
     btnSubmit.textContent = show ? "Creating…" : "Create Case";
   }
 
-  function selectContact(id, name, email, accountId) {
+  function selectContact(id, name, email, accountId, accountName) {
     contactIdInput.value  = id || "";
     accountIdInput.value  = accountId || "";
     contactSelectedName.textContent = id ? `${name} — ${email}` : "(none)";
     contactSelected.hidden = false;
     contactSearch.hidden   = true;
     contactDropdown.hidden = true;
+    accountNameDisplay.value = accountName || "";
+    accountNameRow.hidden    = !accountName;
   }
 
   function clearContact() {
     contactIdInput.value  = "";
     accountIdInput.value  = "";
+    accountNameDisplay.value = "";
+    accountNameRow.hidden    = true;
     contactSelected.hidden = true;
     contactSearch.hidden   = false;
     contactSearch.value    = "";
@@ -65,7 +71,7 @@ Office.onReady(async () => {
         item.innerHTML = `<strong>${c.Full_Name || ""}</strong><span>${c.Email || ""}${c.Account_Name ? " · " + c.Account_Name.name : ""}</span>`;
         item.addEventListener("mousedown", (e) => {
           e.preventDefault();
-          selectContact(c.id, c.Full_Name || "", c.Email || "", c.Account_Name?.id || "");
+          selectContact(c.id, c.Full_Name || "", c.Email || "", c.Account_Name?.id || "", c.Account_Name?.name || "");
         });
         contactDropdown.appendChild(item);
       });
@@ -99,7 +105,7 @@ Office.onReady(async () => {
       try {
         const contact = await Zoho.findContactByEmail(senderEmail);
         if (contact) {
-          selectContact(contact.id, contact.Full_Name || senderEmail, contact.Email || senderEmail, contact.Account_Name?.id || "");
+          selectContact(contact.id, contact.Full_Name || senderEmail, contact.Email || senderEmail, contact.Account_Name?.id || "", contact.Account_Name?.name || "");
         } else {
           contactSearch.value = senderEmail;
         }
