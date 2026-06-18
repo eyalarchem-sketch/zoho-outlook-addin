@@ -18,27 +18,27 @@ Office.onReady(async () => {
 
   // ── Tab 1: Create Case ────────────────────────────────────────
 
-  const btnSubmit   = document.getElementById("btnSubmit");
+  const btnSubmit      = document.getElementById("btnSubmit");
   const createStatusEl = document.getElementById("createStatus");
 
-  const contactSearch       = document.getElementById("contactSearch");
-  const contactDropdown     = document.getElementById("contactDropdown");
-  const contactSelected     = document.getElementById("contactSelected");
-  const contactSelectedName = document.getElementById("contactSelectedName");
-  const btnClearContact     = document.getElementById("btnClearContact");
-  const contactIdInput      = document.getElementById("contactId");
-  const accountIdInput      = document.getElementById("accountId");
-  const accountNameRow      = document.getElementById("accountNameRow");
-  const accountNameDisplay  = document.getElementById("accountNameDisplay");
+  const contactSearch        = document.getElementById("contactSearch");
+  const contactDropdown      = document.getElementById("contactDropdown");
+  const contactSelected      = document.getElementById("contactSelected");
+  const contactSelectedName  = document.getElementById("contactSelectedName");
+  const btnClearContact      = document.getElementById("btnClearContact");
+  const contactIdInput       = document.getElementById("contactId");
+  const accountIdInput       = document.getElementById("accountId");
+  const accountNameRow       = document.getElementById("accountNameRow");
+  const accountNameDisplay   = document.getElementById("accountNameDisplay");
 
-  const supplierSearch        = document.getElementById("supplierSearch");
-  const supplierDropdown      = document.getElementById("supplierDropdown");
-  const supplierSelected      = document.getElementById("supplierSelected");
-  const supplierSelectedName  = document.getElementById("supplierSelectedName");
-  const btnClearSupplier      = document.getElementById("btnClearSupplier");
-  const supplierIdInput       = document.getElementById("supplierId");
-  const supplierContactRow    = document.getElementById("supplierContactRow");
-  const supplierContactSelect = document.getElementById("supplierContactSelect");
+  const supplierSearch         = document.getElementById("supplierSearch");
+  const supplierDropdown       = document.getElementById("supplierDropdown");
+  const supplierSelected       = document.getElementById("supplierSelected");
+  const supplierSelectedName   = document.getElementById("supplierSelectedName");
+  const btnClearSupplier       = document.getElementById("btnClearSupplier");
+  const supplierIdInput        = document.getElementById("supplierId");
+  const supplierContactRow     = document.getElementById("supplierContactRow");
+  const supplierContactSelect  = document.getElementById("supplierContactSelect");
   const supplierContactIdInput = document.getElementById("supplierContactId");
 
   function setCreateStatus(msg, isError = false, link = null) {
@@ -190,7 +190,7 @@ Office.onReady(async () => {
   btnClearSupplier.addEventListener("click", clearSupplier);
   supplierContactSelect.addEventListener("change", () => { supplierContactIdInput.value = supplierContactSelect.value; });
 
-  // Populate Create Case form from email
+  // Populate Create Case form
   async function populateCreateForm() {
     const item = Office.context.mailbox.item;
     document.getElementById("subject").value = item.subject || "";
@@ -246,7 +246,7 @@ Office.onReady(async () => {
       setCreateStatus(`Case ${caseId} created!`, false, caseLink);
 
       if (document.getElementById("includeAttachments").checked) {
-        await uploadAttachments(caseId);
+        await uploadAttachmentsToCase(caseId);
       }
     } catch (err) {
       setCreateStatus(`Error: ${err.message}`, true);
@@ -255,52 +255,17 @@ Office.onReady(async () => {
     }
   }
 
-  async function uploadAttachments(caseId) {
-    const item = Office.context.mailbox.item;
-    const attachments = (item.attachments || []).filter(a => !a.isInline);
-    if (!attachments.length) return;
-
-    return new Promise((resolve) => {
-      let remaining = attachments.length;
-      let failed = 0;
-      attachments.forEach((att) => {
-        item.getAttachmentContentAsync(att.id, async (result) => {
-          if (result.status === Office.AsyncResultStatus.Succeeded) {
-            const { content, format } = result.value;
-            try {
-              let blob;
-              if (format === Office.AttachmentContentFormat.Base64) {
-                const binary = atob(content);
-                const bytes = new Uint8Array(binary.length);
-                for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-                blob = new Blob([bytes]);
-              } else {
-                blob = new Blob([content]);
-              }
-              await Zoho.attachFileToCaseRaw(caseId, att.name, blob);
-            } catch { failed++; }
-          } else { failed++; }
-          remaining--;
-          if (remaining === 0) {
-            if (failed > 0) setCreateStatus(`Case created — ${failed} attachment(s) failed.`, true);
-            resolve();
-          }
-        });
-      });
-    });
-  }
-
   btnSubmit.addEventListener("click", handleSubmit);
 
   // ── Tab 2: Associate Email ────────────────────────────────────
 
-  const caseSearch       = document.getElementById("caseSearch");
-  const caseDropdown     = document.getElementById("caseDropdown");
-  const caseSelectedEl   = document.getElementById("caseSelected");
-  const caseSelectedName = document.getElementById("caseSelectedName");
-  const btnClearCase     = document.getElementById("btnClearCase");
-  const caseIdInput      = document.getElementById("caseId");
-  const btnAssociate     = document.getElementById("btnAssociate");
+  const caseSearch        = document.getElementById("caseSearch");
+  const caseDropdown      = document.getElementById("caseDropdown");
+  const caseSelectedEl    = document.getElementById("caseSelected");
+  const caseSelectedName  = document.getElementById("caseSelectedName");
+  const btnClearCase      = document.getElementById("btnClearCase");
+  const caseIdInput       = document.getElementById("caseId");
+  const btnAssociate      = document.getElementById("btnAssociate");
   const associateStatusEl = document.getElementById("associateStatus");
 
   function setAssociateStatus(msg, isError = false, link = null) {
@@ -342,7 +307,7 @@ Office.onReady(async () => {
       cases.forEach((c) => {
         const el = document.createElement("div");
         el.className = "dropdown-item";
-        el.innerHTML = `<strong>#${c.Case_Number} — ${c.Subject || ""}</strong>`;
+        el.innerHTML = `<strong>#${c.Case_Number}</strong><span>${c.Subject || ""}</span>`;
         el.addEventListener("mousedown", (e) => {
           e.preventDefault();
           selectCase(c.id, c.Case_Number, c.Subject || "");
@@ -371,42 +336,77 @@ Office.onReady(async () => {
   caseSearch.addEventListener("focus", () => { if (caseSearch.value.trim().length >= 2) caseDropdown.hidden = false; });
   btnClearCase.addEventListener("click", clearCase);
 
-  // Pre-fill note content with email body when tab becomes active
-  let notePrefilled = false;
-  document.querySelector('[data-tab="associateEmail"]').addEventListener("click", () => {
-    if (notePrefilled) return;
-    notePrefilled = true;
+  // Build RFC 2822 .eml content from the current email
+  function buildEml(subject, from, toList, ccList, dateStr, bodyText) {
+    const formatAddr = (a) => a.displayName ? `"${a.displayName}" <${a.emailAddress}>` : a.emailAddress;
+    const toHeader  = toList.map(formatAddr).join(", ");
+    const ccHeader  = ccList.length ? `Cc: ${ccList.map(formatAddr).join(", ")}\r\n` : "";
+    const safeBody  = bodyText.replace(/\r?\n/g, "\r\n");
+
+    return [
+      `From: ${formatAddr(from)}`,
+      `To: ${toHeader}`,
+      ccHeader.trimEnd(),
+      `Subject: ${subject}`,
+      `Date: ${dateStr}`,
+      `MIME-Version: 1.0`,
+      `Content-Type: text/plain; charset=UTF-8`,
+      `Content-Transfer-Encoding: 8bit`,
+      ``,
+      safeBody,
+    ].filter((l) => l !== undefined).join("\r\n");
+  }
+
+  async function getEmailAsEml() {
     const item = Office.context.mailbox.item;
-    item.body.getAsync(Office.CoercionType.Text, (result) => {
-      if (result.status === Office.AsyncResultStatus.Succeeded) {
-        document.getElementById("noteContent").value = result.value?.trim() || "";
-      }
+
+    const subject  = item.subject || "(no subject)";
+    const from     = item.from || { displayName: "", emailAddress: "" };
+    const toList   = item.to  || [];
+    const ccList   = item.cc  || [];
+    const dateStr  = (item.dateTimeCreated instanceof Date
+      ? item.dateTimeCreated
+      : new Date()
+    ).toUTCString().replace("GMT", "+0000");
+
+    const bodyText = await new Promise((resolve) => {
+      item.body.getAsync(Office.CoercionType.Text, (r) => {
+        resolve(r.status === Office.AsyncResultStatus.Succeeded ? r.value || "" : "");
+      });
     });
-  });
+
+    const eml = buildEml(subject, from, toList, ccList, dateStr, bodyText);
+    return { eml, subject };
+  }
 
   async function handleAssociate() {
     const caseId = caseIdInput.value.trim();
     if (!caseId) { setAssociateStatus("Please select a case.", true); return; }
-
-    const noteContent = document.getElementById("noteContent").value.trim();
-    const item = Office.context.mailbox.item;
 
     btnAssociate.disabled = true;
     btnAssociate.textContent = "Associating…";
     setAssociateStatus("");
 
     try {
-      const noteTitle = item.subject || "Email note";
+      // Upload the email itself as an .eml file
+      const { eml, subject } = await getEmailAsEml();
+      const emlBlob = new Blob([eml], { type: "message/rfc822" });
+      const safeSubject = (subject || "email").replace(/[\\/:*?"<>|]/g, "_");
+      await Zoho.attachFileToCaseRaw(caseId, `${safeSubject}.eml`, emlBlob);
+
+      // Add notes if provided
+      const noteContent = document.getElementById("noteContent").value.trim();
       if (noteContent) {
-        await Zoho.addNoteToCase(caseId, noteTitle, noteContent);
+        const item = Office.context.mailbox.item;
+        await Zoho.addNoteToCase(caseId, item.subject || "Email note", noteContent);
       }
 
+      // Upload original attachments if checked
       if (document.getElementById("associateAttachments").checked) {
         await uploadAttachmentsToCase(caseId);
       }
 
-      const orgId = await Zoho.getOrgId ? null : null;
-      setAssociateStatus("Email associated to case!", false);
+      setAssociateStatus("Email associated to case successfully!");
     } catch (err) {
       setAssociateStatus(`Error: ${err.message}`, true);
     } finally {
@@ -414,6 +414,10 @@ Office.onReady(async () => {
       btnAssociate.textContent = "Associate Email";
     }
   }
+
+  btnAssociate.addEventListener("click", handleAssociate);
+
+  // ── Shared attachment uploader ────────────────────────────────
 
   async function uploadAttachmentsToCase(caseId) {
     const item = Office.context.mailbox.item;
@@ -442,7 +446,7 @@ Office.onReady(async () => {
           } else { failed++; }
           remaining--;
           if (remaining === 0) {
-            if (failed > 0) setAssociateStatus(`Associated — ${failed} attachment(s) failed.`, true);
+            if (failed > 0) setAssociateStatus(`Done — ${failed} attachment(s) failed to upload.`, true);
             resolve();
           }
         });
@@ -450,9 +454,7 @@ Office.onReady(async () => {
     });
   }
 
-  btnAssociate.addEventListener("click", handleAssociate);
-
-  // ── Auth ───────────────────────────────────────────────────────
+  // ── Auth ──────────────────────────────────────────────────────
 
   function renderAuth() {
     const loggedIn = Auth.isLoggedIn();
