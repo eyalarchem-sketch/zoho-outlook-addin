@@ -8,16 +8,21 @@ Office.onReady(async () => {
   const formSection = document.getElementById("formSection");
   const statusEl    = document.getElementById("status");
 
-  // Contact search elements
-  const contactSearch   = document.getElementById("contactSearch");
-  const contactDropdown = document.getElementById("contactDropdown");
-  const contactSelected = document.getElementById("contactSelected");
+  const contactSearch       = document.getElementById("contactSearch");
+  const contactDropdown     = document.getElementById("contactDropdown");
+  const contactSelected     = document.getElementById("contactSelected");
   const contactSelectedName = document.getElementById("contactSelectedName");
-  const btnClearContact = document.getElementById("btnClearContact");
-  const contactIdInput  = document.getElementById("contactId");
+  const btnClearContact     = document.getElementById("btnClearContact");
+  const contactIdInput      = document.getElementById("contactId");
+  const accountIdInput      = document.getElementById("accountId");
 
-  function setStatus(msg, isError = false) {
-    statusEl.textContent = msg;
+  function setStatus(msg, isError = false, link = null) {
+    statusEl.innerHTML = "";
+    if (link) {
+      statusEl.innerHTML = `${msg} <a href="${link}" target="_blank" rel="noopener">Open in Zoho</a>`;
+    } else {
+      statusEl.textContent = msg;
+    }
     statusEl.className = isError ? "status error" : "status info";
     statusEl.hidden = !msg;
   }
@@ -27,20 +32,21 @@ Office.onReady(async () => {
     btnSubmit.textContent = show ? "Creating…" : "Create Case";
   }
 
-  // --- Contact search ---
-  function selectContact(id, name, email) {
-    contactIdInput.value = id || "";
+  function selectContact(id, name, email, accountId) {
+    contactIdInput.value  = id || "";
+    accountIdInput.value  = accountId || "";
     contactSelectedName.textContent = id ? `${name} — ${email}` : "(none)";
     contactSelected.hidden = false;
-    contactSearch.hidden = true;
+    contactSearch.hidden   = true;
     contactDropdown.hidden = true;
   }
 
   function clearContact() {
-    contactIdInput.value = "";
+    contactIdInput.value  = "";
+    accountIdInput.value  = "";
     contactSelected.hidden = true;
-    contactSearch.hidden = false;
-    contactSearch.value = "";
+    contactSearch.hidden   = false;
+    contactSearch.value    = "";
     contactDropdown.hidden = true;
     contactSearch.focus();
   }
@@ -56,10 +62,10 @@ Office.onReady(async () => {
       contacts.forEach((c) => {
         const item = document.createElement("div");
         item.className = "dropdown-item";
-        item.innerHTML = `<strong>${c.Full_Name || ""}</strong><span>${c.Email || ""}</span>`;
+        item.innerHTML = `<strong>${c.Full_Name || ""}</strong><span>${c.Email || ""}${c.Account_Name ? " · " + c.Account_Name.name : ""}</span>`;
         item.addEventListener("mousedown", (e) => {
           e.preventDefault();
-          selectContact(c.id, c.Full_Name || "", c.Email || "");
+          selectContact(c.id, c.Full_Name || "", c.Email || "", c.Account_Name?.id || "");
         });
         contactDropdown.appendChild(item);
       });
@@ -78,30 +84,22 @@ Office.onReady(async () => {
     }, 350);
   });
 
-  contactSearch.addEventListener("blur", () => {
-    setTimeout(() => { contactDropdown.hidden = true; }, 150);
-  });
-
-  contactSearch.addEventListener("focus", () => {
-    if (contactSearch.value.trim().length >= 2) contactDropdown.hidden = false;
-  });
-
+  contactSearch.addEventListener("blur",  () => { setTimeout(() => { contactDropdown.hidden = true; }, 150); });
+  contactSearch.addEventListener("focus", () => { if (contactSearch.value.trim().length >= 2) contactDropdown.hidden = false; });
   btnClearContact.addEventListener("click", clearContact);
 
-  // --- Populate form from email ---
   async function populateForm() {
     const item = Office.context.mailbox.item;
     document.getElementById("subject").value = item.subject || "";
 
     const senderEmail = item.from?.emailAddress || "";
-
     if (senderEmail) {
       contactSearch.value = senderEmail;
       setStatus("Looking up contact in Zoho…");
       try {
         const contact = await Zoho.findContactByEmail(senderEmail);
         if (contact) {
-          selectContact(contact.id, contact.Full_Name || senderEmail, contact.Email || senderEmail);
+          selectContact(contact.id, contact.Full_Name || senderEmail, contact.Email || senderEmail, contact.Account_Name?.id || "");
         } else {
           contactSearch.value = senderEmail;
         }
@@ -119,13 +117,13 @@ Office.onReady(async () => {
     });
   }
 
-  // --- Submit ---
   async function handleSubmit() {
     const subject = document.getElementById("subject").value.trim();
     if (!subject) { setStatus("Subject is required.", true); return; }
 
     const description = document.getElementById("description").value.trim();
     const contactId   = contactIdInput.value.trim() || null;
+    const accountId   = accountIdInput.value.trim() || null;
     const status      = document.getElementById("caseStatus").value;
     const priority    = document.getElementById("casePriority").value;
 
@@ -133,8 +131,8 @@ Office.onReady(async () => {
     setStatus("");
 
     try {
-      const caseId = await Zoho.createCase({ subject, description, contactId, status, priority });
-      setStatus(`Case created! ID: ${caseId}`);
+      const { id: caseId, url: caseLink } = await Zoho.createCase({ subject, description, contactId, accountId, status, priority });
+      setStatus(`Case ${caseId} created!`, false, caseLink);
 
       if (document.getElementById("includeAttachments").checked) {
         await uploadAttachments(caseId);
@@ -148,15 +146,14 @@ Office.onReady(async () => {
 
   async function uploadAttachments(caseId) {
     const item = Office.context.mailbox.item;
-    const attachments = item.attachments || [];
+    const attachments = (item.attachments || []).filter(a => !a.isInline);
     if (!attachments.length) return;
 
     return new Promise((resolve) => {
-      let remaining = attachments.filter(a => !a.isInline).length;
-      if (!remaining) return resolve();
+      let remaining = attachments.length;
       let failed = 0;
 
-      attachments.filter(a => !a.isInline).forEach((att) => {
+      attachments.forEach((att) => {
         item.getAttachmentContentAsync(att.id, async (result) => {
           if (result.status === Office.AsyncResultStatus.Succeeded) {
             const { content, format } = result.value;
@@ -176,7 +173,7 @@ Office.onReady(async () => {
 
           remaining--;
           if (remaining === 0) {
-            if (failed > 0) setStatus(`Case created — ${failed} attachment(s) failed to upload.`, true);
+            if (failed > 0) setStatus(`Case created — ${failed} attachment(s) failed.`, true);
             resolve();
           }
         });
@@ -188,19 +185,14 @@ Office.onReady(async () => {
     const loggedIn = Auth.isLoggedIn();
     authSection.hidden = loggedIn;
     formSection.hidden = !loggedIn;
-    btnLogout.hidden = !loggedIn;
+    btnLogout.hidden   = !loggedIn;
     if (loggedIn) populateForm();
   }
 
   btnLogin.addEventListener("click", async () => {
     setStatus("Opening Zoho login…");
-    try {
-      await Auth.ensureToken();
-      setStatus("");
-      renderAuth();
-    } catch (err) {
-      setStatus(`Login failed: ${err.message}`, true);
-    }
+    try { await Auth.ensureToken(); setStatus(""); renderAuth(); }
+    catch (err) { setStatus(`Login failed: ${err.message}`, true); }
   });
 
   btnLogout.addEventListener("click", () => { Auth.logout(); setStatus(""); renderAuth(); });

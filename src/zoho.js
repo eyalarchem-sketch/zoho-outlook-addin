@@ -23,12 +23,33 @@ const Zoho = (() => {
     return res.json();
   }
 
+  // Get org ID for building case URLs (cached in localStorage)
+  async function getOrgId() {
+    const cached = localStorage.getItem("zoho_org_id");
+    if (cached) return cached;
+    try {
+      const data = await apiFetch("org");
+      const id = String(data?.org?.[0]?.zgid || "");
+      if (id) localStorage.setItem("zoho_org_id", id);
+      return id;
+    } catch {
+      return "";
+    }
+  }
+
+  function caseUrl(caseId, orgId) {
+    const base = orgId
+      ? `https://crm.zoho.com/crm/org${orgId}/tab/Cases/${caseId}`
+      : `https://crm.zoho.com/crm/tab/Cases/${caseId}`;
+    return base;
+  }
+
   // Look up a Contact by exact email. Returns first match or null.
   async function findContactByEmail(email) {
     if (!email) return null;
     const criteria = `((Email:equals:${email}))`;
     const data = await apiFetch(
-      `Contacts/search?criteria=${encodeURIComponent(criteria)}&fields=id,Full_Name,Email`
+      `Contacts/search?criteria=${encodeURIComponent(criteria)}&fields=id,Full_Name,Email,Account_Name`
     );
     return data?.data?.[0] ?? null;
   }
@@ -42,7 +63,7 @@ const Zoho = (() => {
         ? `((Email:equals:${query}))`
         : `((Full_Name:starts_with:${query}))`;
       const data = await apiFetch(
-        `Contacts/search?criteria=${encodeURIComponent(criteria)}&fields=id,Full_Name,Email&per_page=5`
+        `Contacts/search?criteria=${encodeURIComponent(criteria)}&fields=id,Full_Name,Email,Account_Name&per_page=5`
       );
       return data?.data ?? [];
     } catch {
@@ -50,18 +71,18 @@ const Zoho = (() => {
     }
   }
 
-  // Create a Case. Returns the new record id.
-  async function createCase({ subject, description, contactId, status, priority }) {
+  // Create a Case. Returns { id, url }.
+  async function createCase({ subject, description, contactId, accountId, status, priority }) {
     const record = {
       Subject: subject,
       Description: description,
       Status: status || "New",
       Priority: priority || "Normal",
+      Case_Origin: "Email",
     };
 
-    if (contactId) {
-      record.Related_To = { id: contactId };
-    }
+    if (contactId) record.Related_To  = { id: contactId };
+    if (accountId) record.Account_Name = { id: accountId };
 
     const body = { data: [record] };
     const result = await apiFetch("Cases", {
@@ -73,7 +94,10 @@ const Zoho = (() => {
     if (item?.status !== "success") {
       throw new Error(item?.message || "Failed to create case");
     }
-    return item.details.id;
+
+    const caseId = item.details.id;
+    const orgId  = await getOrgId();
+    return { id: caseId, url: caseUrl(caseId, orgId) };
   }
 
   // Attach a file (as a Blob) to a Case record.

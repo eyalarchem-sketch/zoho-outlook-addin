@@ -203,3 +203,4 @@ textarea { resize: vertical; }
 }
 
 .btn-clear:hover { color: var(--color-primary); }
+.status a { color: inherit; font-weight: 600; margin-left: 6px; text-decoration: underline; }
