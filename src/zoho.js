@@ -158,5 +158,10 @@ const Zoho = (() => {
     }
   }
 
-  return { findContactByEmail, searchContacts, searchAccounts, getContactsByAccount, searchCases, addNoteToCase, createCase, attachFileToCaseRaw };
+  async function getCaseUrl(caseId) {
+    const orgId = await getOrgId();
+    return caseUrl(caseId, orgId);
+  }
+
+  return { findContactByEmail, searchContacts, searchAccounts, getContactsByAccount, searchCases, addNoteToCase, createCase, attachFileToCaseRaw, getCaseUrl };
 })();

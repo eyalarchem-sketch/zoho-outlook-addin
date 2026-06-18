@@ -395,10 +395,10 @@ Office.onReady(async () => {
       await Zoho.attachFileToCaseRaw(caseId, `${safeSubject}.eml`, emlBlob);
 
       // Add notes if provided
+      const noteSubject = document.getElementById("noteSubject").value.trim();
       const noteContent = document.getElementById("noteContent").value.trim();
-      if (noteContent) {
-        const item = Office.context.mailbox.item;
-        await Zoho.addNoteToCase(caseId, item.subject || "Email note", noteContent);
+      if (noteSubject || noteContent) {
+        await Zoho.addNoteToCase(caseId, noteSubject || "(no subject)", noteContent);
       }
 
       // Upload original attachments if checked
@@ -406,7 +406,8 @@ Office.onReady(async () => {
         await uploadAttachmentsToCase(caseId);
       }
 
-      setAssociateStatus("Email associated to case successfully!");
+      const caseLink = await Zoho.getCaseUrl(caseId);
+      setAssociateStatus("Email associated to case!", false, caseLink);
     } catch (err) {
       setAssociateStatus(`Error: ${err.message}`, true);
     } finally {
