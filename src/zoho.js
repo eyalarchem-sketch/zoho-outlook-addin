@@ -79,7 +79,7 @@ const Zoho = (() => {
     if (!accountId) return [];
     try {
       const data = await apiFetch(
-        `Accounts/${accountId}/Contacts?fields=id,Full_Name,Email&per_page=50`
+        `Accounts/${accountId}/Contacts?fields=id,Full_Name,Title,Email&per_page=50`
       );
       return data?.data ?? [];
     } catch {

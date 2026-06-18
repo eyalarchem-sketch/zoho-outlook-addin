@@ -127,7 +127,7 @@ Office.onReady(async () => {
     contacts.forEach((c) => {
       const opt = document.createElement("option");
       opt.value = c.id;
-      opt.textContent = c.Full_Name || c.Email || c.id;
+      opt.textContent = c.Title ? `${c.Full_Name || c.Email} — ${c.Title}` : (c.Full_Name || c.Email || c.id);
       supplierContactSelect.appendChild(opt);
     });
   }
