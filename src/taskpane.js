@@ -3,12 +3,24 @@
 Office.onReady(async () => {
   const btnLogin    = document.getElementById("btnLogin");
   const btnLogout   = document.getElementById("btnLogout");
-  const btnSubmit   = document.getElementById("btnSubmit");
   const authSection = document.getElementById("authSection");
-  const formSection = document.getElementById("formSection");
-  const statusEl    = document.getElementById("status");
+  const appSection  = document.getElementById("appSection");
 
-  // Related To (Contact)
+  // ── Tab switching ──────────────────────────────────────────────
+  document.querySelectorAll(".tab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById(btn.dataset.tab).classList.add("active");
+    });
+  });
+
+  // ── Tab 1: Create Case ────────────────────────────────────────
+
+  const btnSubmit   = document.getElementById("btnSubmit");
+  const createStatusEl = document.getElementById("createStatus");
+
   const contactSearch       = document.getElementById("contactSearch");
   const contactDropdown     = document.getElementById("contactDropdown");
   const contactSelected     = document.getElementById("contactSelected");
@@ -19,26 +31,25 @@ Office.onReady(async () => {
   const accountNameRow      = document.getElementById("accountNameRow");
   const accountNameDisplay  = document.getElementById("accountNameDisplay");
 
-  // Supplier
-  const supplierSearch       = document.getElementById("supplierSearch");
-  const supplierDropdown     = document.getElementById("supplierDropdown");
-  const supplierSelected     = document.getElementById("supplierSelected");
-  const supplierSelectedName = document.getElementById("supplierSelectedName");
-  const btnClearSupplier     = document.getElementById("btnClearSupplier");
-  const supplierIdInput      = document.getElementById("supplierId");
-  const supplierContactRow   = document.getElementById("supplierContactRow");
+  const supplierSearch        = document.getElementById("supplierSearch");
+  const supplierDropdown      = document.getElementById("supplierDropdown");
+  const supplierSelected      = document.getElementById("supplierSelected");
+  const supplierSelectedName  = document.getElementById("supplierSelectedName");
+  const btnClearSupplier      = document.getElementById("btnClearSupplier");
+  const supplierIdInput       = document.getElementById("supplierId");
+  const supplierContactRow    = document.getElementById("supplierContactRow");
   const supplierContactSelect = document.getElementById("supplierContactSelect");
   const supplierContactIdInput = document.getElementById("supplierContactId");
 
-  function setStatus(msg, isError = false, link = null) {
-    statusEl.innerHTML = "";
+  function setCreateStatus(msg, isError = false, link = null) {
+    createStatusEl.innerHTML = "";
     if (link) {
-      statusEl.innerHTML = `${msg} <a href="${link}" target="_blank" rel="noopener">Open in Zoho</a>`;
+      createStatusEl.innerHTML = `${msg} <a href="${link}" target="_blank" rel="noopener">Open in Zoho</a>`;
     } else {
-      statusEl.textContent = msg;
+      createStatusEl.textContent = msg;
     }
-    statusEl.className = isError ? "status error" : "status info";
-    statusEl.hidden = !msg;
+    createStatusEl.className = isError ? "status error" : "status info";
+    createStatusEl.hidden = !msg;
   }
 
   function showLoading(show) {
@@ -46,8 +57,7 @@ Office.onReady(async () => {
     btnSubmit.textContent = show ? "Creating…" : "Create Case";
   }
 
-  // --- Contact helpers ---
-
+  // Contact
   function selectContact(id, name, email, accountId, accountName) {
     contactIdInput.value  = id || "";
     accountIdInput.value  = accountId || "";
@@ -74,54 +84,49 @@ Office.onReady(async () => {
   function showContactDropdown(contacts) {
     contactDropdown.innerHTML = "";
     if (!contacts.length) {
-      const item = document.createElement("div");
-      item.className = "dropdown-item dropdown-empty";
-      item.textContent = "No contacts found";
-      contactDropdown.appendChild(item);
+      const el = document.createElement("div");
+      el.className = "dropdown-item dropdown-empty";
+      el.textContent = "No contacts found";
+      contactDropdown.appendChild(el);
     } else {
       contacts.forEach((c) => {
-        const item = document.createElement("div");
-        item.className = "dropdown-item";
-        item.innerHTML = `<strong>${c.Full_Name || ""}</strong><span>${c.Email || ""}${c.Account_Name ? " · " + c.Account_Name.name : ""}</span>`;
-        item.addEventListener("mousedown", (e) => {
+        const el = document.createElement("div");
+        el.className = "dropdown-item";
+        el.innerHTML = `<strong>${c.Full_Name || ""}</strong><span>${c.Email || ""}${c.Account_Name ? " · " + c.Account_Name.name : ""}</span>`;
+        el.addEventListener("mousedown", (e) => {
           e.preventDefault();
           selectContact(c.id, c.Full_Name || "", c.Email || "", c.Account_Name?.id || "", c.Account_Name?.name || "");
         });
-        contactDropdown.appendChild(item);
+        contactDropdown.appendChild(el);
       });
     }
     contactDropdown.hidden = false;
   }
 
-  let contactSearchTimer = null;
+  let contactTimer = null;
   contactSearch.addEventListener("input", () => {
-    clearTimeout(contactSearchTimer);
+    clearTimeout(contactTimer);
     const q = contactSearch.value.trim();
     if (!q || q.length < 2) { contactDropdown.hidden = true; return; }
-    contactSearchTimer = setTimeout(async () => {
+    contactTimer = setTimeout(async () => {
       const results = await Zoho.searchContacts(q);
       showContactDropdown(results);
     }, 350);
   });
-
   contactSearch.addEventListener("blur",  () => { setTimeout(() => { contactDropdown.hidden = true; }, 150); });
   contactSearch.addEventListener("focus", () => { if (contactSearch.value.trim().length >= 2) contactDropdown.hidden = false; });
   btnClearContact.addEventListener("click", clearContact);
 
-  // --- Supplier helpers ---
-
+  // Supplier
   async function selectSupplier(id, name) {
     supplierIdInput.value = id || "";
     supplierSelectedName.textContent = name || "";
     supplierSelected.hidden = false;
     supplierSearch.hidden   = true;
     supplierDropdown.hidden = true;
-
-    // Load contacts for this supplier account
     supplierContactSelect.innerHTML = '<option value="">— Loading… —</option>';
     supplierContactRow.hidden = false;
     supplierContactIdInput.value = "";
-
     const contacts = await Zoho.getContactsByAccount(id);
     supplierContactSelect.innerHTML = '<option value="">— None —</option>';
     contacts.forEach((c) => {
@@ -147,58 +152,53 @@ Office.onReady(async () => {
   function showSupplierDropdown(accounts) {
     supplierDropdown.innerHTML = "";
     if (!accounts.length) {
-      const item = document.createElement("div");
-      item.className = "dropdown-item dropdown-empty";
-      item.textContent = "No accounts found";
-      supplierDropdown.appendChild(item);
+      const el = document.createElement("div");
+      el.className = "dropdown-item dropdown-empty";
+      el.textContent = "No accounts found";
+      supplierDropdown.appendChild(el);
     } else {
       accounts.forEach((a) => {
-        const item = document.createElement("div");
-        item.className = "dropdown-item";
-        item.innerHTML = `<strong>${a.Account_Name || ""}</strong>`;
-        item.addEventListener("mousedown", (e) => {
+        const el = document.createElement("div");
+        el.className = "dropdown-item";
+        el.innerHTML = `<strong>${a.Account_Name || ""}</strong>`;
+        el.addEventListener("mousedown", (e) => {
           e.preventDefault();
           selectSupplier(a.id, a.Account_Name || "");
         });
-        supplierDropdown.appendChild(item);
+        supplierDropdown.appendChild(el);
       });
     }
     supplierDropdown.hidden = false;
   }
 
-  let supplierSearchTimer = null;
+  let supplierTimer = null;
   supplierSearch.addEventListener("input", () => {
-    clearTimeout(supplierSearchTimer);
+    clearTimeout(supplierTimer);
     const q = supplierSearch.value.trim();
     if (!q || q.length < 2) { supplierDropdown.hidden = true; return; }
-    supplierSearchTimer = setTimeout(async () => {
+    supplierTimer = setTimeout(async () => {
       try {
         const results = await Zoho.searchAccounts(q);
         showSupplierDropdown(results);
       } catch (err) {
-        setStatus(`Supplier search: ${err.message}`, true);
+        setCreateStatus(`Supplier search: ${err.message}`, true);
       }
     }, 350);
   });
-
   supplierSearch.addEventListener("blur",  () => { setTimeout(() => { supplierDropdown.hidden = true; }, 150); });
   supplierSearch.addEventListener("focus", () => { if (supplierSearch.value.trim().length >= 2) supplierDropdown.hidden = false; });
   btnClearSupplier.addEventListener("click", clearSupplier);
+  supplierContactSelect.addEventListener("change", () => { supplierContactIdInput.value = supplierContactSelect.value; });
 
-  supplierContactSelect.addEventListener("change", () => {
-    supplierContactIdInput.value = supplierContactSelect.value;
-  });
-
-  // --- Form population ---
-
-  async function populateForm() {
+  // Populate Create Case form from email
+  async function populateCreateForm() {
     const item = Office.context.mailbox.item;
     document.getElementById("subject").value = item.subject || "";
 
     const senderEmail = item.from?.emailAddress || "";
     if (senderEmail) {
       contactSearch.value = senderEmail;
-      setStatus("Looking up contact in Zoho…");
+      setCreateStatus("Looking up contact in Zoho…");
       try {
         const contact = await Zoho.findContactByEmail(senderEmail);
         if (contact) {
@@ -206,9 +206,9 @@ Office.onReady(async () => {
         } else {
           contactSearch.value = senderEmail;
         }
-        setStatus("");
+        setCreateStatus("");
       } catch (err) {
-        setStatus(`Contact lookup: ${err.message}`, true);
+        setCreateStatus(`Contact lookup: ${err.message}`, true);
         contactSearch.value = senderEmail;
       }
     }
@@ -220,38 +220,36 @@ Office.onReady(async () => {
     });
   }
 
-  // --- Submit ---
-
   async function handleSubmit() {
     const subject = document.getElementById("subject").value.trim();
-    if (!subject) { setStatus("Subject is required.", true); return; }
+    if (!subject) { setCreateStatus("Subject is required.", true); return; }
 
     const type = document.getElementById("caseType").value;
-    if (!type || type === "-None-") { setStatus("Case Type is required.", true); return; }
+    if (!type || type === "-None-") { setCreateStatus("Case Type is required.", true); return; }
 
-    const description         = document.getElementById("description").value.trim();
-    const contactId           = contactIdInput.value.trim() || null;
-    const accountId           = accountIdInput.value.trim() || null;
-    const supplierId          = supplierIdInput.value.trim() || null;
-    const supplierContactId   = supplierContactIdInput.value.trim() || null;
-    const status              = document.getElementById("caseStatus").value;
-    const priority            = document.getElementById("casePriority").value;
+    const description       = document.getElementById("description").value.trim();
+    const contactId         = contactIdInput.value.trim() || null;
+    const accountId         = accountIdInput.value.trim() || null;
+    const supplierId        = supplierIdInput.value.trim() || null;
+    const supplierContactId = supplierContactIdInput.value.trim() || null;
+    const status            = document.getElementById("caseStatus").value;
+    const priority          = document.getElementById("casePriority").value;
 
     showLoading(true);
-    setStatus("");
+    setCreateStatus("");
 
     try {
       const { id: caseId, url: caseLink } = await Zoho.createCase({
         subject, description, contactId, accountId,
         supplierId, supplierContactId, type, status, priority,
       });
-      setStatus(`Case ${caseId} created!`, false, caseLink);
+      setCreateStatus(`Case ${caseId} created!`, false, caseLink);
 
       if (document.getElementById("includeAttachments").checked) {
         await uploadAttachments(caseId);
       }
     } catch (err) {
-      setStatus(`Error: ${err.message}`, true);
+      setCreateStatus(`Error: ${err.message}`, true);
     } finally {
       showLoading(false);
     }
@@ -265,7 +263,6 @@ Office.onReady(async () => {
     return new Promise((resolve) => {
       let remaining = attachments.length;
       let failed = 0;
-
       attachments.forEach((att) => {
         item.getAttachmentContentAsync(att.id, async (result) => {
           if (result.status === Office.AsyncResultStatus.Succeeded) {
@@ -283,10 +280,9 @@ Office.onReady(async () => {
               await Zoho.attachFileToCaseRaw(caseId, att.name, blob);
             } catch { failed++; }
           } else { failed++; }
-
           remaining--;
           if (remaining === 0) {
-            if (failed > 0) setStatus(`Case created — ${failed} attachment(s) failed.`, true);
+            if (failed > 0) setCreateStatus(`Case created — ${failed} attachment(s) failed.`, true);
             resolve();
           }
         });
@@ -294,22 +290,185 @@ Office.onReady(async () => {
     });
   }
 
+  btnSubmit.addEventListener("click", handleSubmit);
+
+  // ── Tab 2: Associate Email ────────────────────────────────────
+
+  const caseSearch       = document.getElementById("caseSearch");
+  const caseDropdown     = document.getElementById("caseDropdown");
+  const caseSelectedEl   = document.getElementById("caseSelected");
+  const caseSelectedName = document.getElementById("caseSelectedName");
+  const btnClearCase     = document.getElementById("btnClearCase");
+  const caseIdInput      = document.getElementById("caseId");
+  const btnAssociate     = document.getElementById("btnAssociate");
+  const associateStatusEl = document.getElementById("associateStatus");
+
+  function setAssociateStatus(msg, isError = false, link = null) {
+    associateStatusEl.innerHTML = "";
+    if (link) {
+      associateStatusEl.innerHTML = `${msg} <a href="${link}" target="_blank" rel="noopener">Open in Zoho</a>`;
+    } else {
+      associateStatusEl.textContent = msg;
+    }
+    associateStatusEl.className = isError ? "status error" : "status info";
+    associateStatusEl.hidden = !msg;
+  }
+
+  function selectCase(id, caseNumber, subject) {
+    caseIdInput.value = id || "";
+    caseSelectedName.textContent = `#${caseNumber} — ${subject}`;
+    caseSelectedEl.hidden = false;
+    caseSearch.hidden     = true;
+    caseDropdown.hidden   = true;
+  }
+
+  function clearCase() {
+    caseIdInput.value = "";
+    caseSelectedEl.hidden = true;
+    caseSearch.hidden     = false;
+    caseSearch.value      = "";
+    caseDropdown.hidden   = true;
+    caseSearch.focus();
+  }
+
+  function showCaseDropdown(cases) {
+    caseDropdown.innerHTML = "";
+    if (!cases.length) {
+      const el = document.createElement("div");
+      el.className = "dropdown-item dropdown-empty";
+      el.textContent = "No cases found";
+      caseDropdown.appendChild(el);
+    } else {
+      cases.forEach((c) => {
+        const el = document.createElement("div");
+        el.className = "dropdown-item";
+        el.innerHTML = `<strong>#${c.Case_Number} — ${c.Subject || ""}</strong>`;
+        el.addEventListener("mousedown", (e) => {
+          e.preventDefault();
+          selectCase(c.id, c.Case_Number, c.Subject || "");
+        });
+        caseDropdown.appendChild(el);
+      });
+    }
+    caseDropdown.hidden = false;
+  }
+
+  let caseTimer = null;
+  caseSearch.addEventListener("input", () => {
+    clearTimeout(caseTimer);
+    const q = caseSearch.value.trim();
+    if (!q || q.length < 2) { caseDropdown.hidden = true; return; }
+    caseTimer = setTimeout(async () => {
+      try {
+        const results = await Zoho.searchCases(q);
+        showCaseDropdown(results);
+      } catch (err) {
+        setAssociateStatus(`Case search: ${err.message}`, true);
+      }
+    }, 350);
+  });
+  caseSearch.addEventListener("blur",  () => { setTimeout(() => { caseDropdown.hidden = true; }, 150); });
+  caseSearch.addEventListener("focus", () => { if (caseSearch.value.trim().length >= 2) caseDropdown.hidden = false; });
+  btnClearCase.addEventListener("click", clearCase);
+
+  // Pre-fill note content with email body when tab becomes active
+  let notePrefilled = false;
+  document.querySelector('[data-tab="associateEmail"]').addEventListener("click", () => {
+    if (notePrefilled) return;
+    notePrefilled = true;
+    const item = Office.context.mailbox.item;
+    item.body.getAsync(Office.CoercionType.Text, (result) => {
+      if (result.status === Office.AsyncResultStatus.Succeeded) {
+        document.getElementById("noteContent").value = result.value?.trim() || "";
+      }
+    });
+  });
+
+  async function handleAssociate() {
+    const caseId = caseIdInput.value.trim();
+    if (!caseId) { setAssociateStatus("Please select a case.", true); return; }
+
+    const noteContent = document.getElementById("noteContent").value.trim();
+    const item = Office.context.mailbox.item;
+
+    btnAssociate.disabled = true;
+    btnAssociate.textContent = "Associating…";
+    setAssociateStatus("");
+
+    try {
+      const noteTitle = item.subject || "Email note";
+      if (noteContent) {
+        await Zoho.addNoteToCase(caseId, noteTitle, noteContent);
+      }
+
+      if (document.getElementById("associateAttachments").checked) {
+        await uploadAttachmentsToCase(caseId);
+      }
+
+      const orgId = await Zoho.getOrgId ? null : null;
+      setAssociateStatus("Email associated to case!", false);
+    } catch (err) {
+      setAssociateStatus(`Error: ${err.message}`, true);
+    } finally {
+      btnAssociate.disabled = false;
+      btnAssociate.textContent = "Associate Email";
+    }
+  }
+
+  async function uploadAttachmentsToCase(caseId) {
+    const item = Office.context.mailbox.item;
+    const attachments = (item.attachments || []).filter(a => !a.isInline);
+    if (!attachments.length) return;
+
+    return new Promise((resolve) => {
+      let remaining = attachments.length;
+      let failed = 0;
+      attachments.forEach((att) => {
+        item.getAttachmentContentAsync(att.id, async (result) => {
+          if (result.status === Office.AsyncResultStatus.Succeeded) {
+            const { content, format } = result.value;
+            try {
+              let blob;
+              if (format === Office.AttachmentContentFormat.Base64) {
+                const binary = atob(content);
+                const bytes = new Uint8Array(binary.length);
+                for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+                blob = new Blob([bytes]);
+              } else {
+                blob = new Blob([content]);
+              }
+              await Zoho.attachFileToCaseRaw(caseId, att.name, blob);
+            } catch { failed++; }
+          } else { failed++; }
+          remaining--;
+          if (remaining === 0) {
+            if (failed > 0) setAssociateStatus(`Associated — ${failed} attachment(s) failed.`, true);
+            resolve();
+          }
+        });
+      });
+    });
+  }
+
+  btnAssociate.addEventListener("click", handleAssociate);
+
+  // ── Auth ───────────────────────────────────────────────────────
+
   function renderAuth() {
     const loggedIn = Auth.isLoggedIn();
     authSection.hidden = loggedIn;
-    formSection.hidden = !loggedIn;
+    appSection.hidden  = !loggedIn;
     btnLogout.hidden   = !loggedIn;
-    if (loggedIn) populateForm();
+    if (loggedIn) populateCreateForm();
   }
 
   btnLogin.addEventListener("click", async () => {
-    setStatus("Opening Zoho login…");
-    try { await Auth.ensureToken(); setStatus(""); renderAuth(); }
-    catch (err) { setStatus(`Login failed: ${err.message}`, true); }
+    setCreateStatus("Opening Zoho login…");
+    try { await Auth.ensureToken(); setCreateStatus(""); renderAuth(); }
+    catch (err) { setCreateStatus(`Login failed: ${err.message}`, true); }
   });
 
-  btnLogout.addEventListener("click", () => { Auth.logout(); setStatus(""); renderAuth(); });
-  btnSubmit.addEventListener("click", handleSubmit);
+  btnLogout.addEventListener("click", () => { Auth.logout(); renderAuth(); });
 
   renderAuth();
 });

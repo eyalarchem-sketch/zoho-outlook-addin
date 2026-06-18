@@ -67,6 +67,27 @@ const Zoho = (() => {
     }
   }
 
+  async function searchCases(query) {
+    if (!query || query.length < 2) return [];
+    const data = await apiFetch(
+      `Cases/search?word=${encodeURIComponent(query)}&fields=id,Subject,Case_Number&per_page=5`
+    );
+    return data?.data ?? [];
+  }
+
+  async function addNoteToCase(caseId, noteTitle, noteContent) {
+    const body = { data: [{ Note_Title: noteTitle, Note_Content: noteContent }] };
+    const result = await apiFetch(`Cases/${caseId}/Notes`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+    const item = result?.data?.[0];
+    if (item?.status !== "success") {
+      throw new Error(item?.message || "Failed to add note");
+    }
+    return item.details.id;
+  }
+
   async function searchAccounts(query) {
     if (!query || query.length < 2) return [];
     const data = await apiFetch(
@@ -137,5 +158,5 @@ const Zoho = (() => {
     }
   }
 
-  return { findContactByEmail, searchContacts, searchAccounts, getContactsByAccount, createCase, attachFileToCaseRaw };
+  return { findContactByEmail, searchContacts, searchAccounts, getContactsByAccount, searchCases, addNoteToCase, createCase, attachFileToCaseRaw };
 })();
