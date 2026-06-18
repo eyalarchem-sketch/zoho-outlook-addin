@@ -1,15 +1,26 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <OfficeApp
   xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+  xmlns:mailappor="http://schemas.microsoft.com/office/mailappversionoverrides/1.0"
   xsi:type="MailApp">
 
   <Id>a3f2c1d4-7e8b-4a9f-b2c3-d4e5f6a7b8c9</Id>
-  <Version>1.0.0</Version>
+  <Version>1.0.0.0</Version>
   <ProviderName>Your Company</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="Zoho CRM Case"/>
   <Description DefaultValue="Create a Zoho CRM case from the selected email"/>
+  <IconUrl DefaultValue="https://eyalarchem-sketch.github.io/zoho-outlook-addin/assets/icon-32.png"/>
+  <HighResolutionIconUrl DefaultValue="https://eyalarchem-sketch.github.io/zoho-outlook-addin/assets/icon-80.png"/>
+  <SupportUrl DefaultValue="https://eyalarchem-sketch.github.io/zoho-outlook-addin"/>
+
+  <AppDomains>
+    <AppDomain>https://eyalarchem-sketch.github.io</AppDomain>
+    <AppDomain>https://accounts.zoho.com</AppDomain>
+    <AppDomain>https://www.zohoapis.com</AppDomain>
+  </AppDomains>
 
   <Hosts>
     <Host Name="Mailbox"/>
@@ -32,17 +43,13 @@
 
   <Permissions>ReadWriteItem</Permissions>
 
-  <Rule xsi:type="RuleCollection" Mode="And">
+  <Rule xsi:type="RuleCollection" Mode="Or">
     <Rule xsi:type="ItemIs" ItemType="Message" FormType="Read"/>
   </Rule>
 
   <DisableEntityHighlighting>false</DisableEntityHighlighting>
 
-  <VersionOverrides
-    xmlns="http://schemas.microsoft.com/office/mailappversionoverrides"
-    xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
-    xmlns:mailappor="http://schemas.microsoft.com/office/mailappversionoverrides/1.0"
-    xsi:type="VersionOverridesV1_0">
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/mailappversionoverrides" xsi:type="VersionOverridesV1_0">
 
     <Requirements>
       <bt:Sets DefaultMinVersion="1.3">
