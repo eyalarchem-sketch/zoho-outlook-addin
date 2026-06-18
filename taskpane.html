@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Create Zoho Case</title>
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  <script src="src/config.js"></script>
+  <script src="src/auth.js"></script>
+  <script src="src/zoho.js"></script>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+  <header>
+    <h1>Create Zoho CRM Case</h1>
+    <button id="btnLogout" class="btn-link" hidden>Sign out</button>
+  </header>
+
+  <!-- Not authenticated -->
+  <section id="authSection">
+    <p>Sign in with your Zoho account to create cases directly from emails.</p>
+    <button id="btnLogin" class="btn-primary">Sign in with Zoho</button>
+  </section>
+
+  <!-- Authenticated -->
+  <section id="formSection" hidden>
+    <div class="field">
+      <label for="subject">Subject <span class="required">*</span></label>
+      <input type="text" id="subject" placeholder="Case subject"/>
+    </div>
+
+    <div class="field">
+      <label for="contactName">Contact (from sender)</label>
+      <input type="text" id="contactName" readonly placeholder="Searching…"/>
+      <input type="hidden" id="contactId"/>
+      <input type="hidden" id="senderEmail"/>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="caseStatus">Status</label>
+        <select id="caseStatus">
+          <option value="New">New</option>
+          <option value="Open">Open</option>
+          <option value="On Hold">On Hold</option>
+          <option value="Escalated">Escalated</option>
+          <option value="Closed">Closed</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="casePriority">Priority</label>
+        <select id="casePriority">
+          <option value="Normal">Normal</option>
+          <option value="Low">Low</option>
+          <option value="High">High</option>
+          <option value="Urgent">Urgent</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="description">Description</label>
+      <textarea id="description" rows="8" placeholder="Email body will be pre-filled…"></textarea>
+    </div>
+
+    <div class="field checkbox-field">
+      <input type="checkbox" id="includeAttachments" checked/>
+      <label for="includeAttachments">Upload email attachments</label>
+    </div>
+
+    <div id="status" class="status" hidden></div>
+
+    <button id="btnSubmit" class="btn-primary">Create Case</button>
+  </section>
+
+  <script src="src/taskpane.js"></script>
+</body>
+</html>

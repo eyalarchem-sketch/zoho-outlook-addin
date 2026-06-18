@@ -1,0 +1,12 @@
+{
+  "name": "zoho-outlook-addin",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "office-addin-dev-certs install --days 365 && npx serve . --ssl-cert .office-addin-dev-certs/localhost.crt --ssl-key .office-addin-dev-certs/localhost.key --listen 3000",
+    "install-certs": "office-addin-dev-certs install --days 365"
+  },
+  "devDependencies": {
+    "office-addin-dev-certs": "^1.8.0",
+    "serve": "^14.0.0"
+  }
+}

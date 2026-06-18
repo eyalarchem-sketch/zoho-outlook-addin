@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Authenticating…</title>
+  <style>
+    body { font-family: "Segoe UI", sans-serif; display: flex; align-items: center;
+           justify-content: center; height: 100vh; margin: 0; background: #f5f5f5; }
+    p { color: #444; font-size: 14px; }
+    .error { color: #c0392b; }
+  </style>
+</head>
+<body>
+  <p id="msg">Completing authentication…</p>
+  <script>
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("code");
+      const error = params.get("error");
+
+      if (error) {
+        document.getElementById("msg").textContent = "Authentication failed: " + error;
+        document.getElementById("msg").className = "error";
+        return;
+      }
+
+      if (code) {
+        // Post the code back to the task pane and close this popup
+        window.opener?.postMessage({ type: "zoho_oauth_code", code }, window.location.origin);
+        document.getElementById("msg").textContent = "Signed in! This window will close…";
+        setTimeout(() => window.close(), 800);
+      } else {
+        document.getElementById("msg").textContent = "No authorization code received.";
+        document.getElementById("msg").className = "error";
+      }
+    })();
+  </script>
+</body>
+</html>
