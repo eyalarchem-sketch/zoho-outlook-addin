@@ -70,9 +70,8 @@ const Zoho = (() => {
   async function searchAccounts(query) {
     if (!query || query.length < 2) return [];
     try {
-      const criteria = `((Account_Name:starts_with:${query}))`;
       const data = await apiFetch(
-        `Accounts/search?criteria=${encodeURIComponent(criteria)}&fields=id,Account_Name&per_page=5`
+        `Accounts/search?word=${encodeURIComponent(query)}&fields=id,Account_Name&per_page=5`
       );
       return data?.data ?? [];
     } catch {
