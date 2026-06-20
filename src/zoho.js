@@ -160,28 +160,38 @@ const Zoho = (() => {
 
   async function createTaskForCase(caseId, subject, dueDateStr) {
     // dueDateStr: "YYYY-MM-DD"
-    // Build timezone offset string e.g. "+03:00"
-    const off    = new Date().getTimezoneOffset();
-    const sign   = off <= 0 ? "+" : "-";
-    const absOff = Math.abs(off);
-    const tz     = `${sign}${String(Math.floor(absOff / 60)).padStart(2, "0")}:${String(absOff % 60).padStart(2, "0")}`;
-    const remindAt = `${dueDateStr}T09:30:00${tz}`;
-    const body = {
+    const createBody = {
       data: [{
         Subject: subject,
         Due_Date: dueDateStr,
         Status: "Not Started",
         What_Id: { id: caseId },
         $se_module: "Cases",
-        Remind_At: { alarm: remindAt },
       }],
     };
-    const result = await apiFetch("Tasks", { method: "POST", body: JSON.stringify(body) });
+    const result = await apiFetch("Tasks", { method: "POST", body: JSON.stringify(createBody) });
     const item = result?.data?.[0];
     if (item?.status !== "success") {
       throw new Error(item?.message || "Failed to create task");
     }
-    return item.details.id;
+    const taskId = item.details.id;
+
+    // Add reminder via update — build timezone offset e.g. "+03:00"
+    const off    = new Date().getTimezoneOffset();
+    const sign   = off <= 0 ? "+" : "-";
+    const absOff = Math.abs(off);
+    const tz     = `${sign}${String(Math.floor(absOff / 60)).padStart(2, "0")}:${String(absOff % 60).padStart(2, "0")}`;
+    const remindAt = `${dueDateStr}T09:30:00${tz}`;
+    try {
+      await apiFetch(`Tasks/${taskId}`, {
+        method: "PUT",
+        body: JSON.stringify({ data: [{ Remind_At: { alarm: remindAt } }] }),
+      });
+    } catch {
+      // Task created; reminder format may not be supported — ignore silently
+    }
+
+    return taskId;
   }
 
   async function getCaseUrl(caseId) {
