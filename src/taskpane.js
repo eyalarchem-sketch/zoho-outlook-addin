@@ -190,6 +190,18 @@ Office.onReady(async () => {
   btnClearSupplier.addEventListener("click", clearSupplier);
   supplierContactSelect.addEventListener("change", () => { supplierContactIdInput.value = supplierContactSelect.value; });
 
+  // Check if current email is already associated with a case
+  async function checkAssociationBanner() {
+    associationBanner.hidden = true;
+    const messageId = Office.context.mailbox.item.internetMessageId;
+    if (!messageId) return;
+    const found = await Zoho.findCaseByMessageId(messageId);
+    if (!found) return;
+    associationLink.textContent = `Case #${found.caseNumber} — ${found.subject}`;
+    associationLink.href = found.url;
+    associationBanner.hidden = false;
+  }
+
   // Populate Create Case form
   async function populateCreateForm() {
     const item = Office.context.mailbox.item;
@@ -271,6 +283,8 @@ Office.onReady(async () => {
   const noteStatusEl       = document.getElementById("noteStatus");
   const btnSetReminder     = document.getElementById("btnSetReminder");
   const reminderStatusEl   = document.getElementById("reminderStatus");
+  const associationBanner  = document.getElementById("associationBanner");
+  const associationLink    = document.getElementById("associationLink");
 
   function setAssociateStatus(msg, isError = false, link = null) {
     associateStatusEl.innerHTML = "";
@@ -397,6 +411,12 @@ Office.onReady(async () => {
       const emlBlob = new Blob([eml], { type: "application/octet-stream" });
       const safeSubject = (subject || "email").replace(/[\\/:*?"<>|]/g, "_");
       await Zoho.attachFileToCaseRaw(caseId, `${safeSubject}.eml`, emlBlob);
+
+      // Store Message-ID so we can detect this association later
+      const messageId = Office.context.mailbox.item.internetMessageId;
+      if (messageId) {
+        try { await Zoho.addAssociationNote(caseId, messageId); } catch { /* non-fatal */ }
+      }
 
       // Upload original attachments if checked
       if (document.getElementById("associateAttachments").checked) {
@@ -539,7 +559,10 @@ Office.onReady(async () => {
     authSection.hidden = loggedIn;
     appSection.hidden  = !loggedIn;
     btnLogout.hidden   = !loggedIn;
-    if (loggedIn) populateCreateForm();
+    if (loggedIn) {
+      populateCreateForm();
+      checkAssociationBanner();
+    }
   }
 
   btnLogin.addEventListener("click", async () => {

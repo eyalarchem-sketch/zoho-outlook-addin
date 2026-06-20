@@ -176,10 +176,40 @@ const Zoho = (() => {
     return item.details.id;
   }
 
+  async function addAssociationNote(caseId, messageId) {
+    const body = {
+      data: [{ Note_Title: "_outlook_assoc_", Note_Content: messageId }],
+    };
+    await apiFetch(`Cases/${caseId}/Notes`, { method: "POST", body: JSON.stringify(body) });
+  }
+
+  async function findCaseByMessageId(messageId) {
+    if (!messageId) return null;
+    try {
+      const escaped = messageId.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+      const query = `SELECT id, Parent_Id FROM Notes WHERE Note_Title = '_outlook_assoc_' and Note_Content like '%${escaped}%' LIMIT 1`;
+      const data = await apiFetch("coql", {
+        method: "POST",
+        body: JSON.stringify({ select_query: query }),
+      });
+      const note = data?.data?.[0];
+      if (!note) return null;
+      const caseId = note.Parent_Id?.id || note.Parent_Id;
+      if (!caseId) return null;
+      const caseData = await apiFetch(`Cases/${caseId}?fields=id,Subject,Case_Number`);
+      const c = caseData?.data?.[0];
+      if (!c) return null;
+      const orgId = await getOrgId();
+      return { caseId: c.id, caseNumber: c.Case_Number, subject: c.Subject, url: caseUrl(c.id, orgId) };
+    } catch {
+      return null;
+    }
+  }
+
   async function getCaseUrl(caseId) {
     const orgId = await getOrgId();
     return caseUrl(caseId, orgId);
   }
 
-  return { findContactByEmail, searchContacts, searchAccounts, getContactsByAccount, searchCases, addNoteToCase, createTaskForCase, createCase, attachFileToCaseRaw, getCaseUrl };
+  return { findContactByEmail, searchContacts, searchAccounts, getContactsByAccount, searchCases, addNoteToCase, createTaskForCase, createCase, attachFileToCaseRaw, getCaseUrl, addAssociationNote, findCaseByMessageId };
 })();

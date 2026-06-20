@@ -235,6 +235,22 @@ textarea { resize: vertical; }
 
 .btn-clear:hover { color: var(--color-primary); }
 
+.assoc-banner {
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  background: #edfaed;
+  color: #1e7e34;
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+
+.assoc-banner a {
+  color: inherit;
+  font-weight: 600;
+  margin-left: 4px;
+  text-decoration: underline;
+}
+
 .section-divider {
   border: none;
   border-top: 1px solid var(--color-border);
