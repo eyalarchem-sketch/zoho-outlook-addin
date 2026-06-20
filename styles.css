@@ -240,3 +240,22 @@ textarea { resize: vertical; }
   border-top: 1px solid var(--color-border);
   margin: 4px 0;
 }
+
+.action-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.reminder-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.reminder-control select {
+  width: auto;
+  padding: 6px 8px;
+}

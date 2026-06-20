@@ -163,7 +163,25 @@
       </div>
 
       <div id="noteStatus" class="status" hidden></div>
-      <button id="btnAddNote" class="btn-primary">Add Note</button>
+      <div id="reminderStatus" class="status" hidden></div>
+
+      <div class="action-row">
+        <button id="btnAddNote" class="btn-primary">Add Note</button>
+        <div class="reminder-control">
+          <select id="reminderDays" title="Days from today">
+            <option value="1">1 day</option>
+            <option value="2" selected>2 days</option>
+            <option value="3">3 days</option>
+            <option value="5">5 days</option>
+            <option value="7">7 days</option>
+            <option value="10">10 days</option>
+            <option value="14">14 days</option>
+            <option value="21">21 days</option>
+            <option value="30">30 days</option>
+          </select>
+          <button id="btnSetReminder" class="btn-primary">Set Reminder</button>
+        </div>
+      </div>
     </div>
 
   </div>

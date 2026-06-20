@@ -158,10 +158,31 @@ const Zoho = (() => {
     }
   }
 
+  async function createTaskForCase(caseId, subject, dueDateStr) {
+    // dueDateStr: "YYYY-MM-DD"
+    const remindAt = `${dueDateStr}T09:30:00`;
+    const body = {
+      data: [{
+        Subject: subject,
+        Due_Date: dueDateStr,
+        Status: "Not Started",
+        What_Id: { id: caseId },
+        $se_module: "Cases",
+        Remind_At: { alarm: remindAt },
+      }],
+    };
+    const result = await apiFetch("Tasks", { method: "POST", body: JSON.stringify(body) });
+    const item = result?.data?.[0];
+    if (item?.status !== "success") {
+      throw new Error(item?.message || "Failed to create task");
+    }
+    return item.details.id;
+  }
+
   async function getCaseUrl(caseId) {
     const orgId = await getOrgId();
     return caseUrl(caseId, orgId);
   }
 
-  return { findContactByEmail, searchContacts, searchAccounts, getContactsByAccount, searchCases, addNoteToCase, createCase, attachFileToCaseRaw, getCaseUrl };
+  return { findContactByEmail, searchContacts, searchAccounts, getContactsByAccount, searchCases, addNoteToCase, createTaskForCase, createCase, attachFileToCaseRaw, getCaseUrl };
 })();

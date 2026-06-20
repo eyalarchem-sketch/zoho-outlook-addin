@@ -267,8 +267,10 @@ Office.onReady(async () => {
   const caseIdInput       = document.getElementById("caseId");
   const btnAssociate      = document.getElementById("btnAssociate");
   const associateStatusEl = document.getElementById("associateStatus");
-  const btnAddNote        = document.getElementById("btnAddNote");
-  const noteStatusEl      = document.getElementById("noteStatus");
+  const btnAddNote         = document.getElementById("btnAddNote");
+  const noteStatusEl       = document.getElementById("noteStatus");
+  const btnSetReminder     = document.getElementById("btnSetReminder");
+  const reminderStatusEl   = document.getElementById("reminderStatus");
 
   function setAssociateStatus(msg, isError = false, link = null) {
     associateStatusEl.innerHTML = "";
@@ -451,6 +453,47 @@ Office.onReady(async () => {
   }
 
   btnAddNote.addEventListener("click", handleAddNote);
+
+  async function handleSetReminder() {
+    const caseId = caseIdInput.value.trim();
+    if (!caseId) { setReminderStatus("Please select a case first.", true); return; }
+
+    const days = parseInt(document.getElementById("reminderDays").value, 10);
+    const due  = new Date();
+    due.setDate(due.getDate() + days);
+    const dueDateStr = due.toISOString().slice(0, 10); // "YYYY-MM-DD"
+
+    const item    = Office.context.mailbox.item;
+    const subject = `Follow up: ${item.subject || "Case"}`;
+
+    btnSetReminder.disabled = true;
+    btnSetReminder.textContent = "Setting…";
+    setReminderStatus("");
+
+    try {
+      await Zoho.createTaskForCase(caseId, subject, dueDateStr);
+      const caseLink = await Zoho.getCaseUrl(caseId);
+      setReminderStatus(`Reminder set for ${dueDateStr} at 09:30.`, false, caseLink);
+    } catch (err) {
+      setReminderStatus(`Error: ${err.message}`, true);
+    } finally {
+      btnSetReminder.disabled = false;
+      btnSetReminder.textContent = "Set Reminder";
+    }
+  }
+
+  function setReminderStatus(msg, isError = false, link = null) {
+    reminderStatusEl.innerHTML = "";
+    if (link) {
+      reminderStatusEl.innerHTML = `${msg} <a href="${link}" target="_blank" rel="noopener">Open in Zoho</a>`;
+    } else {
+      reminderStatusEl.textContent = msg;
+    }
+    reminderStatusEl.className = isError ? "status error" : "status info";
+    reminderStatusEl.hidden = !msg;
+  }
+
+  btnSetReminder.addEventListener("click", handleSetReminder);
 
   // ── Shared attachment uploader ────────────────────────────────
 
