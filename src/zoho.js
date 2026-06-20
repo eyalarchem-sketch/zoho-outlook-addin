@@ -160,7 +160,12 @@ const Zoho = (() => {
 
   async function createTaskForCase(caseId, subject, dueDateStr) {
     // dueDateStr: "YYYY-MM-DD"
-    const remindAt = `${dueDateStr}T09:30:00`;
+    // Build timezone offset string e.g. "+03:00"
+    const off    = new Date().getTimezoneOffset();
+    const sign   = off <= 0 ? "+" : "-";
+    const absOff = Math.abs(off);
+    const tz     = `${sign}${String(Math.floor(absOff / 60)).padStart(2, "0")}:${String(absOff % 60).padStart(2, "0")}`;
+    const remindAt = `${dueDateStr}T09:30:00${tz}`;
     const body = {
       data: [{
         Subject: subject,
